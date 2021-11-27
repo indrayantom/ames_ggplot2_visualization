@@ -1,0 +1,280 @@
+---
+title: "Ames Housing Prices : Data Visualization Hands-on"
+author: "Indra Yanto"
+date: "11/18/2021"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Library needed :**
+```{r,results='hide',warning=FALSE,message=FALSE}
+library(tidyverse)
+library(gghighlight)
+library(patchwork)
+
+```
+
+# Import Data
+Data used in this work is House Sale Prices in Ames, Iowa, USA from 2006-2010, downloaded from Kaggle : https://www.kaggle.com/c/house-prices-advanced-regression-techniques .
+```{r,warning=FALSE}
+df_ori=read.csv('train.csv')
+df_ori=tbl_df(df_ori)
+df_ori
+```
+All columns in dataset :
+```{r}
+glimpse(df_ori)
+```
+
+# 1. Count of one categorical feature
+To execute this command, we will analyze the count of each type of foundation used for the houses. The corresponding variable is Foundation which values consist of :
+
+- **BrkTil** : Brick & Tile
+- **CBlock** : Cinder Block
+- **PConc** : Poured Contrete
+- **Slab** : Slab
+- **Stone** : Stone
+- **Wood** : Wood
+
+```{r,message=FALSE}
+df_ori %>% 
+  group_by(Foundation) %>% 
+  summarise(nbrow=n()) %>% 
+  ggplot(aes(x = Foundation,y=nbrow))+ylim(0,850)+
+  geom_bar(stat='identity',fill = "#00AFBB")+
+  geom_label(aes(label=nbrow))+
+  labs(title =  'Count of Foundation Variable',subtitle = 'Cinder block and poured concrete are the most common foundation', x ='Foundation', y='Count')+theme_bw()+gghighlight(max(nbrow)>600,unhighlighted_params = aes(fill=NULL,color=NULL))
+```
+
+By visualizing the count of Foundation variable, Cinder Block and Poured Concrete are easily recognized as the most common foundation used for houses in Ames,Iowa (2006-2010). Other types of foundation such as slab, stone, and wood are considered rare meanwhile brick and tile foundation is still used for hundred of houses.
+
+# 2. Distribution of one continuous feature
+SalePrice variable is analyzed in this section and plotted by using the histogram. Since it's very likely that the histogram will be positively skewed, Log transformation will be applied to make the distribution more 'normal'. Then, the histogram and the boxplot before and after this transformation will be visualized side to side to make sure whether the transformation works.
+```{r}
+#Create new columns LogSalePrice that contains result of log-transformation
+df_ori=df_ori %>% 
+  mutate(LogSalePrice=log(SalePrice))
+```
+```{r}
+#Histogram of Sale Price after transformed
+p1=df_ori %>% 
+  ggplot(aes(x=LogSalePrice))+geom_histogram(bins = 30,fill='white',color='black',aes(y=..density..),size=0.5)+geom_density(fill='#E69F00',alpha=0.2,size=0.7,aes(y=..density..))+theme_minimal()+geom_vline(aes(xintercept=mean(LogSalePrice)),color="blue", linetype="dashed", size=1)+labs(x='log(SalePrice)')
+```
+```{r}
+#Histogram of Sale Price before transformed
+p2=df_ori %>% 
+  ggplot(aes(x=SalePrice))+geom_histogram(bins = 30,fill='white',color='black',aes(y=..density..),size=0.5)+geom_density(fill='#E69F00',alpha=0.2,size=0.7,aes(y=..density..))+theme_minimal()+geom_vline(aes(xintercept=mean(SalePrice)),color="blue", linetype="dashed", size=1)
+```
+```{r,fig.width=10,fig.height=5}
+#Combine both graphs
+(p2+p1)+plot_annotation(title='The Histogram of SalePrice Variable',subtitle ='Log transformation successfully transforms the positive-skewed SalePrice distribution into normal distribution')
+```
+
+# 3. Categorical - Continuous
+One thing that immediately appears on my mind when I see this dataset is what is the relationship between Year Sold (YrSold) and Sale Price (LogSalePrice). Please note that even though year is numeric, we can't say that year is a continuous variable since (2006+2007/2) or (2006*2007) do not have any meaning. That's why i think it's more reasonable to classify year as categorical variable.
+```{r,message=FALSE}
+df_ori %>% ggplot(aes(x=YrSold,y=LogSalePrice))+geom_jitter(color='gray')+geom_smooth(color='black',formula = y ~ s(x, bs = "cs", k = 5))+theme_minimal()+labs(title='Sale Price vs Year Sold',subtitle = 'Houses price tended to be stagnant during 2006-2010 period',y='log(Sale Price)',x='Year Sold')
+```
+
+It's very clear to see that the prices were stagnant during 2006-2010. This happened because during these year, US was affected by phenomenon called the Great Recession. These years was surely a nightmare for all real estate inventors because the prices didn't raise year after year.
+
+Another interesting thing to be analyzed is the relationship between neighborhood and the sale price, which will give us informations about where the elite area is, etc. According to Google, neighborhood is local geographic area with similar characteristics. It may be referred to by name (e.g., Brooklyn Heights, Palisades) and have designated boundaries. Common practices to plot this kind of data is by using boxplots, or facets. But in this exercise, i want to try the ridgeline plot.
+
+```{r}
+library(ggridges) #library to plot the ridgline plot
+```
+```{r,message=FALSE}
+df_ori %>% 
+  ggplot(aes(x=SalePrice/1000,y=Neighborhood,fill=Neighborhood))+geom_density_ridges()+theme_minimal()+labs(x='Sale Prices in 1000$',y='Neighborhood')+theme_ridges(font_size = 11,center_axis_labels = TRUE)+theme(legend.position = 'none')+labs(title='Sale Price for Each Neighborhood',subtitle='NRidgHt, NoRidge, StoneBr have the most expensive and diverse prices')
+```
+From above graph, we can interpret that StoneBr, NoRidge and NridgHt are considered neighborhoods with the most expensive and diverse house prices meanwhile MeadowV is the cheapest among all neighborhoods.
+
+Cheapest median :
+```{r}
+df_ori %>% 
+  group_by(Neighborhood) %>% 
+  summarise(median=median(SalePrice)) %>% 
+  arrange(median) %>% 
+  head(5)
+```
+
+Highest median:
+```{r}
+df_ori %>% 
+  group_by(Neighborhood) %>% 
+  summarise(median=median(SalePrice)) %>% 
+  arrange(desc(median)) %>% 
+  head(5)
+```
+# 4. Continuous - Continuous
+One more interesting thing to be analyzed is which Area that have strong correlation to the target variable, SalePrice. First, let's make a new dataframe that contains all variable name with 'Area' in its name and also SalePrice.
+```{r}
+df_new=df_ori %>% 
+  select(contains('Area'))
+df_new=df_new %>% mutate(SalePrice=df_ori$SalePrice)
+df_new
+```
+
+```{r}
+cor(df_new)
+```
+
+Remove MasVnrArea because it contains NA pearson correlation values, and add few more columns which are the results of log transformation.
+```{r}
+df_new = df_new %>% select(-MasVnrArea)
+df_new = df_new %>% mutate(LogSalePrice=log(SalePrice),LogLotArea=log(LotArea),LogGrLivArea=log(GrLivArea),LogPoolArea=log(PoolArea),LogGarageArea=log(GarageArea))
+cor(df_new)
+```
+
+We get NA values for LogPoolArea and LogGarageArea because not all houses have Garage and Pool (0 area)
+```{r,message=FALSE}
+df_new=df_new %>% select(-LogPoolArea,-LogGarageArea)
+library(reshape2)
+get_lower_tri<-function(cormat){
+  cormat[lower.tri(cormat)] <- NA
+  return(cormat)
+}
+df_cor=round(cor(df_new),2)
+melt_df_cor=get_lower_tri(df_cor)
+
+```
+Heatmap for Pearson Correlation Matrix :
+```{r}
+melt_df_cor=melt(melt_df_cor,na.rm = TRUE)
+```
+```{r}
+melt_df_cor %>% 
+  ggplot(aes(Var2, Var1, fill = value))+
+ geom_tile(color = "black")+
+ scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+   midpoint = 0, limit = c(-1,1), space = "Lab", 
+   name="Pearson\nCorrelation") +
+  theme_minimal()+ 
+ theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+    size = 10, hjust = 1))+geom_text(aes(Var2,Var1,label=value))+labs(title='Pearson Correlation Heatmap',subtitle='LogSalePrice vs LogGrLivArea have the highest correlation',x='',y='')
+```
+
+Based on the heatmap, we can see that all area variables have positive correlations which is reasonable. Highest correlation found in the relationship between LogSalePrice and LogGrLivArea (Ground Living Area), i.e 0.73, slightly higher than correlation between SalePrice and GrLivArea, i.e 0.71. This result proves that GrLivArea (Ground Living Area) is one of the strong predictors for the target variable SalePrice.In the end, let's do scatter plotting with linear regression for LogGrLivArea and LogSalePrice.
+```{r,message=FALSE}
+df_ori %>% 
+  ggplot()+geom_point(aes(x=log(GrLivArea),y=LogSalePrice,color=Neighborhood))+geom_smooth(aes(x=log(GrLivArea),y=LogSalePrice),method = 'lm',color='black')+theme_minimal()+labs(title= 'LogGrLivArea vs LogSalePrice',subtitle='The linear regression line fits the scatter point nicely',x='LogGrLivArea',y='LogSalePrice')
+```
+
+# BONUS 
+
+One of my milestones for data visualization that i set since i started learning this data science field is able to create geospatial map visualization. Hence in this section, i really want to create the map visualization for houses in Ames related to this data. Unfortunately, i face two big problems :
+
+- There aren't any informations about longitude and latitude coordinate for each house
+- After found the longitude and latitude informations in the original data, it's really difficult to connect the longitude and latitude information in the raw data for each house in our train dataset downloaded from kaggle. The original dataset is extracted from library AmesHousing and contains more row than train.csv from Kaggle, i.e 2930 rows and 82 columns, with longitude and latitude columns for addition
+
+To tackle this two problems (which i found out really difficult to solve), the dataset that will be used is Ames Housing data from the library AmesHousing itself, not from the train.csv downloaded from kaggle.
+```{r}
+library(AmesHousing) #For extract latitude and longitude information
+library(ggmap)
+df_1=make_ames()
+ames_df=tbl_df(df_1)
+ames_df
+```
+
+```{r}
+library(jpeg)
+library(grid)
+googlemap <- readJPEG("D:\\Learning_r\\Cleaning_dATA\\Cleaning_Data_Project\\Project_Cleaning\\HW_Day12_Indra\\map_ames.jpg") #reading JPG image for the Ames, Iowa Map taken from openstreetmap.org
+```
+Transform the full name of neighborhoods in ames_df dataset into its initial from Kaggle.
+```{r}
+Neigh=function(x){
+  if (x=='North_Ames'){return('NAmes')}
+  if (x=='Gilbert'){return('Gilbert')}
+  if (x=='Stone_Brook'){return('StoneBr')}
+  if (x=='Northwest_Ames'){return('NWAmes')}
+  if (x=='Somerset'){return('Somerst')}
+  if (x=='Briardale'){return('BrDale')}
+  if (x=='Northpark_Villa'){return('NPkVill')}
+  if (x=='Northridge_Heights'){return('NridgHt')}
+  if (x=='Bloomington_Heights'){return('Blmngtn')}
+  if (x=='Northridge'){return('NoRidge')}
+  if (x=='Sawyer_West'){return('SawyerW')}
+  if (x=='Sawyer'){return('Sawyer')}
+  if (x=='Greens'){return('Greens')}
+  if (x=='Brookside'){return('BrkSide')}
+  if (x=='Old_Town'){return('OldTown')}
+  if (x=='Iowa_DOT_and_Rail_Road'){return('IDOTRR')}
+  if (x=='Clear_Creek'){return('ClearCr')}
+  if (x=='South_and_West_of_Iowa_State_University'){return('SWISU')}
+  if (x=='Edwards'){return('Edwards')}
+  if (x=='College_Creek'){return('CollgCr')}
+  if (x=='Crawford'){return('Crawfor')}
+  if (x=='Blueste'){return('Blueste')}
+  if (x=='Mitchell'){return('Mitchel')}
+  if (x=='Timberland'){return('Timber')}
+  if (x=='Meadow_Village'){return('MeadowV')}
+  if (x=='Veenker'){return('Veenker')}
+  if (x=='Green_Hills'){return('GreenH')}
+  if (x=='Landmark'){return('Landm')}
+}
+Neigh=Vectorize(Neigh)
+```
+
+```{r}
+ames_df=ames_df %>% mutate(Neigh_Initial=Neigh(Neighborhood))
+```
+```{r}
+ames_df_locate=ames_df %>% group_by(Neigh_Initial) %>% 
+  summarise(Latitude=mean(Latitude),Longitude=mean(Longitude))
+ames_df_locate
+```
+I create this new dataframe in order to label the 28 neighborhoods (not 2930 labels, but only 28).
+```{r}
+ames_df %>% filter(!is.na(Latitude)) %>%
+  ggplot(aes(x=Longitude,y=Latitude,color=Neigh_Initial)) + 
+    annotation_custom(rasterGrob(googlemap,
+                               width = unit(1,"npc"),
+                               height = unit(1,"npc")),
+                    -Inf, Inf, -Inf, Inf) +
+  scale_y_continuous(limits = c(41.9700,42.0800)) +
+  scale_x_continuous(limits = c(-93.7100,-93.5600)) +
+  geom_point()+geom_label(data=ames_df_locate,label=ames_df_locate$Neigh_Initial,alpha=0.8,size=3)+labs(title='Map of Neighborhoods in Ames,Iowa')
+```
+
+And this is the map of Neighborhoods in Ames, Iowa. Next, we will plot the sale prices based on this map
+```{r}
+ames_df %>% filter(!is.na(Latitude)) %>%
+  ggplot(aes(x=Longitude,y=Latitude,color=cut_number(Sale_Price/1000,6))) + 
+    annotation_custom(rasterGrob(googlemap,
+                               width = unit(1,"npc"),
+                               height = unit(1,"npc")),
+                    -Inf, Inf, -Inf, Inf) +
+  scale_y_continuous(limits = c(41.9700,42.0800)) +
+  scale_x_continuous(limits = c(-93.7100,-93.5600)) +
+  geom_point() + 
+  labs(title="House Prices by Location",subtitle='Highest prices found in NridgHt, NoRidge, and StoneBr') + 
+  scale_color_discrete(name="Price in $1000")
+```
+
+The conclusion we get from this map visualization is similar as before, i.e The neighborhoods with the highest prices are NridgHt,  NoRidge StoneBr, Timber, Somerst meanwhile the lowest prices are Meadowv, IDOTRR, BrDale, OldTown, and Edwards.
+
+P.s. : maybe in the next work i will adjust the neighborhood labels  a little bit so it becomes more clear to see.
+
+Credit to these webs, that help me by giving insights about this data and ggplot2 ,especially the procedures to create geospatial visualization :
+
+-https://rstudio-pubs-static.s3.amazonaws.com/337439_24918eaefe724411be93e41ede48b256.html
+
+-https://rpubs.com/sknapp/667278
+
+-https://medium.com/upasana-mahanta/exploratory-data-analysis-19feb90ab9e7
+
+-https://www.youtube.com/watch?v=2k8O-Y_uiRU
+
+
+
+
+
+
