@@ -5,6 +5,8 @@ This work is data visualization hands-on of Ames Housing Prices dataset, downloa
 ![ide](https://img.shields.io/badge/RStudio-75AADB?style=for-the-badge&logo=RStudio&logoColor=white)
 ![kaggle](https://img.shields.io/badge/Kaggle-20BEFF?style=for-the-badge&logo=Kaggle&logoColor=white)
 
+Just in case you didn't know. The codes are contained in the .Rmd (Rmarkdown) file, whereas the results and codes are neatly combined in the .html file (knitted version of Rmarkdown). Feel free to download and open it 😃😉.
+
 ## Objectives
 Data used in this work is House Sale Prices in Ames, Iowa, USA from 2006-2010, downloaded from [Kaggle](https://www.kaggle.com/c/house-prices-advanced-regression-techniques). Overall, this work visualized :
 
