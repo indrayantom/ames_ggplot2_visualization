@@ -94,6 +94,7 @@ library(ggridges) #library to plot the ridgline plot
 df_ori %>% 
   ggplot(aes(x=SalePrice/1000,y=Neighborhood,fill=Neighborhood))+geom_density_ridges()+theme_minimal()+labs(x='Sale Prices in 1000$',y='Neighborhood')+theme_ridges(font_size = 11,center_axis_labels = TRUE)+theme(legend.position = 'none')+labs(title='Sale Price for Each Neighborhood',subtitle='NRidgHt, NoRidge, StoneBr have the most expensive and diverse prices')
 ```
+
 From above graph, we can interpret that StoneBr, NoRidge and NridgHt are considered neighborhoods with the most expensive and diverse house prices meanwhile MeadowV is the cheapest among all neighborhoods.
 
 Cheapest median :
@@ -177,7 +178,6 @@ One of my milestones for data visualization that i set since i started learning 
 To tackle this two problems (which i found out really difficult to solve), the dataset that will be used is Ames Housing data from the library AmesHousing itself, not from the train.csv downloaded from kaggle.
 ```{r}
 library(AmesHousing) #For extract latitude and longitude information
-library(ggmap)
 df_1=make_ames()
 ames_df=tbl_df(df_1)
 ames_df
@@ -265,13 +265,13 @@ P.s. : maybe in the next work i will adjust the neighborhood labels  a little bi
 
 Credit to these webs, that help me by giving insights about this data and ggplot2 ,especially the procedures to create geospatial visualization :
 
--https://rstudio-pubs-static.s3.amazonaws.com/337439_24918eaefe724411be93e41ede48b256.html
+- https://rstudio-pubs-static.s3.amazonaws.com/337439_24918eaefe724411be93e41ede48b256.html
 
--https://rpubs.com/sknapp/667278
+- https://rpubs.com/sknapp/667278
 
--https://medium.com/upasana-mahanta/exploratory-data-analysis-19feb90ab9e7
+- https://medium.com/upasana-mahanta/exploratory-data-analysis-19feb90ab9e7
 
--https://www.youtube.com/watch?v=2k8O-Y_uiRU
+- https://www.youtube.com/watch?v=2k8O-Y_uiRU
 
 
 
