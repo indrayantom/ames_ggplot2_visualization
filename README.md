@@ -1,6 +1,6 @@
 # :star2:Ames Housing Prices : Data Visualization Hands-on:star2:
 
-This work is data visualization hands-on of Ames Housing Prices dataset, downloaded from Kaggle. Even though it looks simple, all plot were created attractively using a few of libraries and methods you may have never heard of before (includes Geospatial Visualization). This work was done in R (Rstudio) and tidyverse environment. Reviewed by my mentor at dibimbing.id wtih score 100/100 as he said, "*The visualization results are already on par with what is expected in the industry*" 👍.
+This work is data visualization hands-on of Ames Housing Prices dataset, downloaded from Kaggle. Even though it looks simple, all plot were created attractively using a few of libraries and methods you may have never heard of before (includes Geospatial Visualization). This work was done in R (Rstudio) and tidyverse environment. 
 
 ![ide](https://img.shields.io/badge/RStudio-75AADB?style=for-the-badge&logo=RStudio&logoColor=white)
 ![kaggle](https://img.shields.io/badge/Kaggle-20BEFF?style=for-the-badge&logo=Kaggle&logoColor=white)
